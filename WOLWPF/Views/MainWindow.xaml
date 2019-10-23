@@ -13,10 +13,10 @@
             <ColumnDefinition Width="387*"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Button Content="Scan" HorizontalAlignment="Left" Margin="15,24,0,0" VerticalAlignment="Top" Width="148" Height="63" FontSize="16" Grid.Column="1"/>
-        <Button Content="Wake up" Grid.Column="2" HorizontalAlignment="Left" Margin="10,24,0,0" VerticalAlignment="Top" Width="167" Height="63" FontSize="16"/>
-        <Button Content="Wake up All" Grid.Column="2" HorizontalAlignment="Left" Margin="185,24,0,0" VerticalAlignment="Top" Width="149" Height="63" FontSize="16"/>
-        <ListView HorizontalAlignment="Left" Height="305" Margin="2,104,0,0" VerticalAlignment="Top" Width="568" Grid.ColumnSpan="2" Grid.Column="1">
+        <Button x:Name="StartScan" Content="Scan" HorizontalAlignment="Left" Margin="15,24,0,0" VerticalAlignment="Top" Width="148" Height="63" FontSize="16" Grid.Column="1" Click="StartScan_Click" />
+        <Button Content="Wake up" Grid.Column="2" HorizontalAlignment="Left" Margin="0,24,0,0" VerticalAlignment="Top" Width="167" Height="63" FontSize="16"/>
+        <Button Content="Wake up All" Grid.Column="2" HorizontalAlignment="Left" Margin="200,24,0,0" VerticalAlignment="Top" Width="149" Height="63" FontSize="16"/>
+        <ListView HorizontalAlignment="Left" Height="305" Margin="2,104,0,0" VerticalAlignment="Top" Width="568" Grid.ColumnSpan="2" Grid.Column="1" DataContext="{Binding ElementName=Computers, UpdateSourceTrigger=PropertyChanged}" >
             <ListView.View>
                 <GridView>
                     <GridViewColumn/>
