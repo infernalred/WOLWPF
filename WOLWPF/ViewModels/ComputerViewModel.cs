@@ -8,9 +8,11 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using WOLWPF.Models;
 
 namespace WOLWPF.ViewModels
@@ -29,7 +31,7 @@ namespace WOLWPF.ViewModels
             {
                 return _scanCommand ??
                     (_scanCommand = new RelayCommand(obj =>
-                    { ScanIP(); }));
+                    { Thread _thread = new Thread(() => ScanIP()); _thread.Start(); }));
             }
         }
 
@@ -53,6 +55,8 @@ namespace WOLWPF.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
 
+
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public void ScanIP()
@@ -61,6 +65,7 @@ namespace WOLWPF.ViewModels
             IPHostEntry iPHostEntry = Dns.GetHostEntry(myCompname);
             IPAddress myIp = Dns.GetHostEntry(myCompname).AddressList.Where(x => x.AddressFamily == AddressFamily.InterNetwork).FirstOrDefault();
             string[] ipArray = myIp.ToString().Split('.');
+
             for (int i = 0; i < 254; i++)
             {
                 IPAddress dstIP = IPAddress.Parse(string.Concat(ipArray[0] + ".", ipArray[1] + ".", ipArray[2] + ".", i));
@@ -77,9 +82,11 @@ namespace WOLWPF.ViewModels
                     for (int j = 0; j < macAddrLen; j++)
                         str[j] = macAddr[j].ToString("x2");
                     string macAddress = string.Join(":", str);
-                    string _hostname = host.HostName;
-                    string _ip = dstIP.ToString();
-                    Computers.Add(new Computer() { IP = dstIP.ToString(), Hostname = host.HostName, MAC = macAddress });
+                    App.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        Computers.Add(new Computer() { IP = dstIP.ToString(), Hostname = host.HostName, MAC = macAddress });
+                    }));
+                    
                 }
                 catch { }
             }
