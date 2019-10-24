@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WOLWPF"
+        xmlns:viewmodels="clr-namespace:WOLWPF.ViewModels"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="596">
     <Grid Margin="0,0,2,0">
@@ -13,13 +14,15 @@
             <ColumnDefinition Width="387*"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Button x:Name="StartScan" Content="Scan" HorizontalAlignment="Left" Margin="15,24,0,0" VerticalAlignment="Top" Width="148" Height="63" FontSize="16" Grid.Column="1" Click="StartScan_Click" />
+        <Button x:Name="StartScan" Command="{Binding ScanCommand}" Content="Scan" HorizontalAlignment="Left" Margin="15,24,0,0" VerticalAlignment="Top" Width="148" Height="63" FontSize="16" Grid.Column="1"/>
         <Button Content="Wake up" Grid.Column="2" HorizontalAlignment="Left" Margin="0,24,0,0" VerticalAlignment="Top" Width="167" Height="63" FontSize="16"/>
         <Button Content="Wake up All" Grid.Column="2" HorizontalAlignment="Left" Margin="200,24,0,0" VerticalAlignment="Top" Width="149" Height="63" FontSize="16"/>
-        <ListView HorizontalAlignment="Left" Height="305" Margin="2,104,0,0" VerticalAlignment="Top" Width="568" Grid.ColumnSpan="2" Grid.Column="1" DataContext="{Binding ElementName=Computers, UpdateSourceTrigger=PropertyChanged}" >
+        <ListView HorizontalAlignment="Left" Height="305" Margin="2,104,0,0" VerticalAlignment="Top" Width="568" Grid.ColumnSpan="2" Grid.Column="1" ItemsSource="{Binding Computers, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding SelectedComputer}" >
             <ListView.View>
                 <GridView>
-                    <GridViewColumn/>
+                    <GridViewColumn Width="200" Header="IP" DisplayMemberBinding="{Binding IP}"/>
+                    <GridViewColumn Width="150" Header="Hostname" DisplayMemberBinding="{Binding Hostname}"/>
+                    <GridViewColumn Width="200" Header="MAC" DisplayMemberBinding="{Binding MAC}"/>
                 </GridView>
             </ListView.View>
         </ListView>

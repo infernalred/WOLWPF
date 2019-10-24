@@ -10,9 +10,12 @@ namespace WOLWPF.Models
 {
     class Computer : INotifyPropertyChanged
     {
-        public string IP { get { return this.IP; } set { this.IP = value; OnPropertyChanged("IP"); } }
-        public string Hostname { get { return this.Hostname; } set { this.Hostname = value; OnPropertyChanged("Hostname"); } }
-        public string MAC { get { return this.MAC; } set { this.MAC = value; OnPropertyChanged("MAC"); } }
+        private string _hostname;
+        private string _ip;
+        private string _mac;
+        public string IP { get { return _ip; } set { _ip = value; OnPropertyChanged("IP"); } }
+        public string Hostname { get { return _hostname; } set { _hostname = value; OnPropertyChanged("Hostname"); } }
+        public string MAC { get { return _mac; } set { _mac = value; OnPropertyChanged("MAC"); } }
 
 
 

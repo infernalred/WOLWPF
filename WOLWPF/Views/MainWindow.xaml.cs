@@ -21,16 +21,10 @@ namespace WOLWPF
     /// </summary>
     public partial class MainWindow : Window
     {
-        ComputerViewModel computerView = new ComputerViewModel();
         public MainWindow()
         {
             InitializeComponent();
             DataContext = new ComputerViewModel();
-        }
-
-        private void StartScan_Click(object sender, RoutedEventArgs e)
-        {
-            computerView.ScanIP();
         }
     }
 }
