@@ -32,7 +32,9 @@ namespace WOLWPF.ViewModels
             {
                 return _scanCommand ??
                     (_scanCommand = new RelayCommand(obj =>
-                    { Thread _thread = new Thread(() => Scan()); _thread.Start(); }));
+                    {
+                        Task.Run(() => Scan());
+                    }));
             }
         }
 
@@ -42,8 +44,11 @@ namespace WOLWPF.ViewModels
             get
             {
                 return _wakeUpCommand ??
-                    (_wakeUpCommand = new RelayCommand(obj => 
-                    WakePC(SelectedComputer.MAC, SelectedComputer.IP)));
+                    (_wakeUpCommand = new RelayCommand(obj =>
+                    {
+                        WakePC(SelectedComputer.MAC, SelectedComputer.IP);
+                    }, (obj) => SelectedComputer != null));
+                       
             }
         }
 
@@ -83,7 +88,32 @@ namespace WOLWPF.ViewModels
                 ScanIP(string.Concat(ipArray[0] + ".", ipArray[1] + ".", ipArray[2] + ".", j));
             });
         }
-        
+
+        //public Task<Computer> ScanIP(string ip)
+        //{
+        //    IPAddress dstIP = IPAddress.Parse(ip);
+        //    Computer result;
+        //    try
+        //    {
+        //        IPHostEntry host = Dns.GetHostEntry(dstIP);
+        //        byte[] macAddr = new byte[6];
+        //        uint macAddrLen = (uint)macAddr.Length;
+
+        //        if (SendARP(BitConverter.ToInt32(dstIP.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
+        //            throw new InvalidOperationException("Send ARP failed");
+
+        //        string[] str = new string[(int)macAddrLen];
+        //        for (int j = 0; j < macAddrLen; j++)
+        //            str[j] = macAddr[j].ToString("x2");
+        //        string macAddress = string.Join(":", str);
+        //        result = new Computer() { IP = dstIP.ToString(), Hostname = host.HostName, MAC = macAddress };
+
+
+        //    }
+        //    catch { }
+        //    return result;
+        //}
+
         public void ScanIP(string ip)
         {
             IPAddress dstIP = IPAddress.Parse(ip);
