@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -108,11 +109,11 @@ namespace WOLWPF.ViewModels
             catch { }
         }
 
-        public void WakePC(string _Mac, string ip)
+        public void WakePC(string mac, string ip)
         {
             IPAddress IP = IPAddress.Parse(ip);
             UdpClient UDP = new UdpClient();
-            string Mac = _Mac.Replace(":", "");
+            string Mac = Regex.Replace(mac, "-|:", "");
             try
             {
                 UDP.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 1);
