@@ -76,23 +76,130 @@ namespace WOLWPF.ViewModels
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void Scan()
+        public async void Scan()
         {
             string myCompname = Dns.GetHostName();
-            IPHostEntry iPHostEntry = Dns.GetHostEntry(myCompname);
+            //IPHostEntry iPHostEntry = await Dns.GetHostEntryAsync(myCompname);
             IPAddress myIp = Dns.GetHostEntry(myCompname).AddressList.Where(x => x.AddressFamily == AddressFamily.InterNetwork).FirstOrDefault();
             string[] ipArray = myIp.ToString().Split('.');
 
-            Parallel.For(1, 254, j =>
+            List<Task<IPHostEntry>> tasks = new List<Task<IPHostEntry>>();
+            for (int i = 1; i < 254; i++)
             {
-                ScanIP(string.Concat(ipArray[0] + ".", ipArray[1] + ".", ipArray[2] + ".", j));
+                tasks.Add(Dns.GetHostEntryAsync(string.Concat(ipArray[0] + ".", ipArray[1] + ".", ipArray[2] + ".", i)));
+            }
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch (Exception)
+            {
+            }
+            foreach (var task in tasks)
+            {
+                if (!task.IsFaulted)
+                {
+                    Computer comp = await ScanIPAsync(task.Result);
+                    App.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    Computers.Add(comp);
+                }));
+                }
+
+
+            }
+
+
+            //Parallel.For(1, 254, async j =>
+            //{
+            //    //Computers.Add(async ScanIPAsync(string.Concat(ipArray[0] + ".", ipArray[1] + ".", ipArray[2] + ".", j)));
+            //    Computer tmp = await ScanIPAsync(string.Concat(ipArray[0] + ".", ipArray[1] + ".", ipArray[2] + ".", j));
+            //    App.Current.Dispatcher.Invoke(new Action(() =>
+            //    {
+            //        Computers.Add(tmp);
+            //    }));
+            //});
+        }
+        public Task<Computer> ScanIPAsync(IPHostEntry iPHostEntry)
+        {
+            IPAddress dstIP = iPHostEntry.AddressList.Where(x => x.AddressFamily == AddressFamily.InterNetwork).FirstOrDefault();
+            byte[] macAddr = new byte[6];
+            uint macAddrLen = (uint)macAddr.Length;
+
+            if (SendARP(BitConverter.ToInt32(dstIP.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
+                throw new InvalidOperationException("Send ARP failed {iPHostEntry.AddressList[0]}");
+
+            string[] str = new string[(int)macAddrLen];
+            for (int j = 0; j < macAddrLen; j++)
+                str[j] = macAddr[j].ToString("x2");
+            string macAddress = string.Join(":", str);
+
+            //return new Computer() { IP = iPHostEntry.AddressList[0].ToString(), Hostname = iPHostEntry.HostName, MAC = macAddress };
+            return Task.Run(() =>
+            {
+                Computer comp = new Computer() { IP = dstIP.ToString(), Hostname = iPHostEntry.HostName, MAC = macAddress };
+                return comp;
             });
+
+        }
+//public Task<Computer> ScanIPAsync(IPHostEntry iPHostEntry)
+//{
+//    IPAddress dstIP = IPAddress.Parse(ip);
+//    string HostName = string.Empty;
+//    string macAddress = string.Empty;
+//    try
+//    {
+//        IPHostEntry host = Dns.GetHostEntry(dstIP);
+//        byte[] macAddr = new byte[6];
+//        uint macAddrLen = (uint)macAddr.Length;
+
+//        if (SendARP(BitConverter.ToInt32(dstIP.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
+//            throw new InvalidOperationException("Send ARP failed");
+
+//        string[] str = new string[(int)macAddrLen];
+//        for (int j = 0; j < macAddrLen; j++)
+//            str[j] = macAddr[j].ToString("x2");
+//        macAddress = string.Join(":", str);
+//        HostName = host.HostName;
+
+//    }
+//    catch { }
+//    //return new Computer() { IP = dstIP.ToString(), Hostname = HostName, MAC = macAddress };
+//    return Task.Run( () => {
+//        Computer comp = new Computer() { IP = dstIP.ToString(), Hostname = HostName, MAC = macAddress };
+//        return comp;
+//    }); 
+
+//}
+
+public async void ScanIP(string ip)
+        {
+            IPAddress dstIP = IPAddress.Parse(ip);
+            try
+            {
+                IPHostEntry host = await Dns.GetHostEntryAsync(dstIP);
+                byte[] macAddr = new byte[6];
+                uint macAddrLen = (uint)macAddr.Length;
+
+                if (SendARP(BitConverter.ToInt32(dstIP.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
+                    throw new InvalidOperationException("Send ARP failed");
+
+                string[] str = new string[(int)macAddrLen];
+                for (int j = 0; j < macAddrLen; j++)
+                    str[j] = macAddr[j].ToString("x2");
+                string macAddress = string.Join(":", str); 
+                App.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    Computers.Add(new Computer() { IP = dstIP.ToString(), Hostname = host.HostName, MAC = macAddress });
+                }));
+
+            }
+            catch { }
         }
 
-        //public Task<Computer> ScanIP(string ip)
+        //public void ScanIP(string ip)
         //{
         //    IPAddress dstIP = IPAddress.Parse(ip);
-        //    Computer result;
         //    try
         //    {
         //        IPHostEntry host = Dns.GetHostEntry(dstIP);
@@ -106,38 +213,14 @@ namespace WOLWPF.ViewModels
         //        for (int j = 0; j < macAddrLen; j++)
         //            str[j] = macAddr[j].ToString("x2");
         //        string macAddress = string.Join(":", str);
-        //        result = new Computer() { IP = dstIP.ToString(), Hostname = host.HostName, MAC = macAddress };
-
+        //        App.Current.Dispatcher.Invoke(new Action(() =>
+        //        {
+        //            Computers.Add(new Computer() { IP = dstIP.ToString(), Hostname = host.HostName, MAC = macAddress });
+        //        }));
 
         //    }
         //    catch { }
-        //    return result;
         //}
-
-        public void ScanIP(string ip)
-        {
-            IPAddress dstIP = IPAddress.Parse(ip);
-            try
-            {
-                IPHostEntry host = Dns.GetHostEntry(dstIP);
-                byte[] macAddr = new byte[6];
-                uint macAddrLen = (uint)macAddr.Length;
-
-                if (SendARP(BitConverter.ToInt32(dstIP.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
-                    throw new InvalidOperationException("Send ARP failed");
-
-                string[] str = new string[(int)macAddrLen];
-                for (int j = 0; j < macAddrLen; j++)
-                    str[j] = macAddr[j].ToString("x2");
-                string macAddress = string.Join(":", str);
-                App.Current.Dispatcher.Invoke(new Action(() =>
-                {
-                    Computers.Add(new Computer() { IP = dstIP.ToString(), Hostname = host.HostName, MAC = macAddress });
-                }));
-
-            }
-            catch { }
-        }
 
         public void WakePC(string mac, string ip)
         {
