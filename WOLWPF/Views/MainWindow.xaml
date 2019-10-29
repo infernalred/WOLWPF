@@ -16,7 +16,7 @@
         </Grid.ColumnDefinitions>
         <Button x:Name="StartScan" Command="{Binding ScanCommand}" Content="Scan" HorizontalAlignment="Left" Margin="15,24,0,0" VerticalAlignment="Top" Width="148" Height="63" FontSize="16" Grid.Column="1"/>
         <Button x:Name="WakeUp" Command="{Binding WakeUpCommand}" Content="Wake up" Grid.Column="2" HorizontalAlignment="Left" Margin="0,24,0,0" VerticalAlignment="Top" Width="167" Height="63" FontSize="16"/>
-        <Button Content="Wake up All" Grid.Column="2" HorizontalAlignment="Left" Margin="200,24,0,0" VerticalAlignment="Top" Width="149" Height="63" FontSize="16"/>
+        <Button Content="Wake up All" Grid.Column="2" HorizontalAlignment="Left" Margin="200,24,0,0" VerticalAlignment="Top" Width="149" Height="63" FontSize="16" IsEnabled="False"/>
         <ListView HorizontalAlignment="Left" Height="305" Margin="2,104,0,0" VerticalAlignment="Top" Width="568" Grid.ColumnSpan="2" Grid.Column="1" ItemsSource="{Binding Computers, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding SelectedComputer}" >
             <ListView.View>
                 <GridView>
