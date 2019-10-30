@@ -7,13 +7,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Threading;
 using WOLWPF.Models;
 
 namespace WOLWPF.ViewModels
@@ -76,53 +71,33 @@ namespace WOLWPF.ViewModels
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void Scan()
+        public async void Scan()
         {
             string myCompname = Dns.GetHostName();
             IPAddress myIp = Dns.GetHostEntry(myCompname).AddressList.Where(x => x.AddressFamily == AddressFamily.InterNetwork).FirstOrDefault();
             string[] ipArray = myIp.ToString().Split('.');
-            Parallel.For(1, 254, async j =>
+            List<Task<Computer>> tasks = new List<Task<Computer>>();
+
+
+            Parallel.For(1, 254, j =>
             {
-                Computer tmp = await ScanIPAsync(string.Concat(ipArray[0] + ".", ipArray[1] + ".", ipArray[2] + ".", j));
+                tasks.Add(ScanIPAsync(string.Concat(ipArray[0] + ".", ipArray[1] + ".", ipArray[2] + ".", j)));
+            });
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch { }
+            foreach (var task in tasks)
+            {
                 App.Current.Dispatcher.Invoke(new Action(() =>
                 {
-                    if (tmp != null)
-                        Computers.Add(tmp);
+                    if (task != null && !task.IsFaulted)
+                        Computers.Add(task.Result);
                 }));
-            });
-        }
-
-        public async Task<Computer> ScanIPAsync(string ip)
-        {
-            IPAddress dstIP = IPAddress.Parse(ip);
-            IPHostEntry IPHost = null;
-            try
-            {
-                IPHost = await Dns.GetHostEntryAsync(ip);
-            }
-            catch { }
-
-            if (IPHost == null)
-                return null;
-
-            byte[] macAddr = new byte[6];
-            uint macAddrLen = (uint)macAddr.Length;
-            try
-            {
-                if (SendARP(BitConverter.ToInt32(dstIP.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
-                    return null;
 
             }
-            catch { }
-
-            string[] str = new string[(int)macAddrLen];
-            for (int j = 0; j < macAddrLen; j++)
-                str[j] = macAddr[j].ToString("x2");
-            string macAddress = string.Join(":", str);
-            return new Computer() { IP = dstIP.ToString(), Hostname = IPHost.HostName, MAC = macAddress };
-
         }
-
         public async void ScanIP(string ip)
         {
             IPAddress dstIP = IPAddress.Parse(ip);
@@ -183,6 +158,32 @@ namespace WOLWPF.ViewModels
             {
                 UDP.Close();
             }
+        }
+
+        public Task<Computer> ScanIPAsync(string ip)
+        {
+            TaskCompletionSource<Computer> tcs = new TaskCompletionSource<Computer>();
+            try
+            {
+                IPAddress dstIP = IPAddress.Parse(ip);
+                IPHostEntry IPHost = null;
+                byte[] macAddr = new byte[6];
+                uint macAddrLen = (uint)macAddr.Length;
+                IPHost = Dns.GetHostEntry(ip);
+                if (SendARP(BitConverter.ToInt32(dstIP.GetAddressBytes(), 0), 0, macAddr, ref macAddrLen) != 0)
+                    tcs.SetException(new InvalidOperationException("Send ARP failed"));
+                string[] str = new string[(int)macAddrLen];
+                for (int j = 0; j < macAddrLen; j++)
+                    str[j] = macAddr[j].ToString("x2");
+                string macAddress = string.Join(":", str);
+                Computer comp = new Computer() { IP = dstIP.ToString(), Hostname = IPHost.HostName, MAC = macAddress };
+                tcs.SetResult(comp);
+            }
+            catch (Exception e)
+            {
+                tcs.SetException(e);
+            }
+            return tcs.Task;
         }
     }
 }
